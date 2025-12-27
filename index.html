@@ -49,4 +49,261 @@
 
                 <div class="glass-card p-4 mb-4 flex items-center justify-between border-l-4 border-l-blue-400 shadow-sm">
                     <div class="flex items-center">
-                        <i :data-
+                        <i :data-lucide="currentWeather.icon" class="text-blue-400 mr-3"></i>
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Fukuoka 天氣</p>
+                            <p class="text-lg font-bold text-gray-800">{{ currentWeather.temp }}°C <span class="text-xs font-normal text-gray-400">體感 {{ currentWeather.feel }}°C</span></p>
+                        </div>
+                    </div>
+                    <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-bold">{{ currentWeather.status }}</span>
+                </div>
+
+                <draggable v-model="itineraryItems" item-key="id" handle=".drag-handle" ghost-class="drag-ghost">
+                    <template #item="{element, index}">
+                        <div v-if="element.date === selectedDate">
+                            <div v-if="index > 0 && getTransportData(index)" class="flex items-center justify-center py-2 text-gray-400 space-x-2">
+                                <i :data-lucide="getTransportData(index).icon" class="w-3 h-3"></i>
+                                <span class="text-[10px] font-bold">{{ getTransportData(index).time }} min</span>
+                                <div class="h-8 border-l border-dashed border-gray-300"></div>
+                            </div>
+
+                            <div v-if="element.category === '航班'" class="bg-gradient-to-br from-blue-600 to-blue-400 text-white p-5 rounded-[32px] shadow-lg mb-4 relative drag-handle cursor-grab">
+                                <div class="flex justify-between items-center mb-3 text-[10px] font-bold">
+                                    <span>{{ element.name }}</span>
+                                    <button @click="editItem(element)" class="bg-white/20 p-1 rounded-full"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
+                                </div>
+                                <div class="flex justify-between items-center text-center">
+                                    <div><h3 class="text-2xl font-black">TPE</h3><p class="text-xs">{{ element.time }}</p></div>
+                                    <div class="flex-1 px-4"><div class="border-t border-dashed border-white/40 relative"><i data-lucide="plane" class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-90"></i></div></div>
+                                    <div><h3 class="text-2xl font-black">FUK</h3><p class="text-xs">{{ element.arrTime || '--:--' }}</p></div>
+                                </div>
+                            </div>
+
+                            <div v-else class="glass-card p-5 relative shadow-sm border border-white mb-2 drag-handle cursor-grab active:cursor-grabbing">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-[9px] bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-black uppercase">{{ element.category }}</span>
+                                    <button @click="editItem(element)" class="text-gray-300"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+                                </div>
+                                <h3 @click="openMap(element.name)" class="font-bold text-gray-800 text-lg mt-1 flex items-center">
+                                    {{ element.name }} <i data-lucide="navigation" class="w-3 h-3 ml-2 text-blue-400"></i>
+                                </h3>
+                                <div class="grid grid-cols-2 gap-2 mt-2 text-[11px] text-gray-500">
+                                    <p v-if="element.time"><i data-lucide="clock" class="inline w-3 h-3 mr-1"></i>{{ element.time }}</p>
+                                    <p v-if="element.price"><i data-lucide="ticket" class="inline w-3 h-3 mr-1"></i>¥{{ element.price }}</p>
+                                </div>
+                                <p v-if="element.note" class="text-[11px] text-blue-400 mt-2 italic bg-blue-50/50 p-2 rounded-xl"># {{ element.note }}</p>
+                            </div>
+                        </div>
+                    </template>
+                </draggable>
+            </div>
+
+            <div v-if="activeTab === 'info'" class="space-y-4 py-4">
+                <div v-for="info in infoList" class="glass-card p-5 relative border border-white shadow-sm">
+                    <button @click="deleteItem('info', info)" class="absolute top-4 right-4 text-gray-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <h4 class="font-bold text-gray-800 flex items-center"><i data-lucide="info" class="w-4 h-4 mr-2 text-blue-400"></i>{{ info.title }}</h4>
+                    <p class="text-sm text-gray-500 mt-2 leading-relaxed whitespace-pre-line">{{ info.content }}</p>
+                </div>
+            </div>
+
+            <div v-if="activeTab === 'shopping'" class="grid grid-cols-2 gap-4 py-4">
+                <div v-for="shop in shoppingList" class="glass-card p-2 relative text-center border border-white shadow-sm overflow-hidden">
+                    <button @click="deleteItem('shopping', shop)" class="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1"><i data-lucide="x" class="w-3 h-3"></i></button>
+                    <div class="w-full h-32 bg-gray-100 rounded-2xl mb-2 overflow-hidden">
+                        <img v-if="shop.image" :src="shop.image" class="w-full h-full object-cover">
+                        <div v-else class="w-full h-full flex items-center justify-center text-gray-300"><i data-lucide="image" class="w-6 h-6"></i></div>
+                    </div>
+                    <p class="font-bold text-xs text-gray-700 truncate px-1">{{ shop.name }}</p>
+                </div>
+            </div>
+
+            <div v-if="activeTab === 'expenses'" class="space-y-3 py-4">
+                <div class="bg-blue-600 rounded-[32px] p-6 text-white mb-6 shadow-lg shadow-blue-200">
+                    <p class="text-xs opacity-70 mb-1 font-bold">總支出 (JPY)</p>
+                    <h2 class="text-4xl font-bold">¥ {{ totalExpenses.toLocaleString() }}</h2>
+                </div>
+                <div v-for="ex in expenses" class="glass-card p-4 flex justify-between items-center relative border border-white shadow-sm">
+                    <div>
+                        <span class="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded font-bold mr-1">{{ ex.category }}</span>
+                        <p class="font-bold text-gray-800 inline-block">{{ ex.name }}</p>
+                        <p class="text-[10px] text-gray-400 mt-1">{{ ex.date }} · {{ ex.payment }}</p>
+                    </div>
+                    <p class="font-bold text-red-500">¥ {{ ex.amount }}</p>
+                </div>
+            </div>
+        </main>
+
+        <button @click="openAddModal" class="fixed bottom-8 right-8 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-95">
+            <i data-lucide="plus"></i>
+        </button>
+
+        <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+            <div class="modal-content shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 italic">{{ isEditing ? '編輯' : '新增' }}{{ activeTabName }}</h3>
+                    <button @click="showModal = false" class="text-gray-300"><i data-lucide="x"></i></button>
+                </div>
+                
+                <div class="space-y-4">
+                    <template v-if="activeTab === 'itinerary'">
+                        <select v-model="newItem.category" class="w-full bg-gray-50 rounded-2xl p-4 outline-none font-medium">
+                            <option>景點</option><option>住宿</option><option>美食</option><option>購物</option><option>航班</option><option>其他</option>
+                        </select>
+                        <input v-model="newItem.name" placeholder="名稱" class="w-full bg-gray-50 rounded-2xl p-4 outline-none font-medium">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input v-model="newItem.time" placeholder="開始/營業時間" class="w-full bg-gray-50 rounded-2xl p-4 outline-none">
+                            <input v-if="newItem.category === '航班'" v-model="newItem.arrTime" placeholder="抵達時間" class="w-full bg-gray-50 rounded-2xl p-4 outline-none">
+                            <input v-if="newItem.category === '景點'" v-model="newItem.price" placeholder="門票費用" class="w-full bg-gray-50 rounded-2xl p-4 outline-none">
+                        </div>
+                        <div v-if="newItem.category !== '航班'">
+                            <label class="text-xs text-gray-400 ml-2">交通方式 (到此地的方式)</label>
+                            <select v-model="newItem.transport" class="w-full bg-gray-50 rounded-2xl p-4 outline-none mt-1">
+                                <option value="walk">步行</option><option value="car">開車</option><option value="bus">大眾運輸</option>
+                            </select>
+                        </div>
+                        <textarea v-model="newItem.note" placeholder="特色 & 備註" class="w-full bg-gray-50 rounded-2xl p-4 outline-none h-24 font-medium"></textarea>
+                    </template>
+
+                    <template v-if="activeTab === 'shopping'">
+                        <input v-model="newItem.name" placeholder="商品名稱" class="w-full bg-gray-50 rounded-2xl p-4 outline-none">
+                        <div class="relative w-full h-40 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden">
+                            <img v-if="newItem.image" :src="newItem.image" class="w-full h-full object-cover">
+                            <template v-else><i data-lucide="camera" class="text-gray-300 mb-2"></i><span class="text-xs text-gray-400">點擊上傳商品照</span></template>
+                            <input type="file" @change="handleFileUpload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                        </div>
+                    </template>
+
+                    <template v-if="activeTab === 'expenses'">
+                        <select v-model="newItem.category" class="w-full bg-gray-50 rounded-2xl p-4 outline-none"><option>交通</option><option>飲食</option><option>住宿</option><option>門票</option><option>購物</option><option>其他</option></select>
+                        <input v-model="newItem.name" placeholder="品項名稱" class="w-full bg-gray-50 rounded-2xl p-4 outline-none">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" v-model="newItem.date" class="bg-gray-50 rounded-2xl p-4 outline-none">
+                            <input type="number" v-model.number="newItem.amount" placeholder="金額 (JPY)" class="bg-gray-50 rounded-2xl p-4 outline-none">
+                        </div>
+                        <select v-model="newItem.payment" class="w-full bg-gray-50 rounded-2xl p-4 outline-none"><option>現金</option><option>信用卡</option></select>
+                    </template>
+                </div>
+
+                <div class="flex space-x-3 mt-8">
+                    <button v-if="isEditing" @click="handleDeleteItem" class="flex-1 bg-red-50 text-red-500 rounded-2xl py-4 font-black">刪除</button>
+                    <button @click="handleAddItem" class="flex-[2] bg-blue-600 text-white rounded-2xl py-4 font-black shadow-lg shadow-blue-100">儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
+        
+        createApp({
+            components: { draggable: window.vuedraggable },
+            setup() {
+                const activeTab = ref('itinerary');
+                const selectedDate = ref('1/6');
+                const showModal = ref(false);
+                const isEditing = ref(false);
+                const currentEditingId = ref(null);
+
+                const tabs = [
+                    { id: 'itinerary', icon: 'map-pin', name: '行程' },
+                    { id: 'info', icon: 'info', name: '資訊' },
+                    { id: 'shopping', icon: 'shopping-basket', name: '購物清單' },
+                    { id: 'expenses', icon: 'banknote', name: '花費' }
+                ];
+
+                const dates = [
+                    { weekday: 'Mon', dayNum: '6', date: '1/6', weather: { temp: 4, feel: 1, status: '下雪中', icon: 'cloud-snow' } },
+                    { weekday: 'Tue', dayNum: '7', date: '1/7', weather: { temp: 6, feel: 4, status: '多雲', icon: 'cloud' } },
+                    { weekday: 'Wed', dayNum: '8', date: '1/8', weather: { temp: 8, feel: 6, status: '晴朗', icon: 'sun' } },
+                    { weekday: 'Thu', dayNum: '9', date: '1/9', weather: { temp: 10, feel: 9, status: '微風', icon: 'wind' } }
+                ];
+
+                const itineraryItems = ref([
+                    { id: 1, date: '1/6', category: '航班', name: '去程航班', flightNo: 'AK1510', time: '11:55', arrTime: '15:15', transport: 'car' },
+                    { id: 2, date: '1/6', category: '美食', name: '一蘭拉麵 總店', time: '18:00', note: '必吃排隊美食', transport: 'walk' }
+                ]);
+
+                const infoList = ref([{ id: 1, title: '住宿資訊', content: 'The BREAKFAST HOTEL 福岡中洲' }]);
+                const shoppingList = ref([]);
+                const expenses = ref([]);
+                
+                const newItem = ref({ category: '景點', name: '', time: '', arrTime: '', price: '', note: '', transport: 'walk', date: '', payment: '現金', amount: null, image: null });
+
+                const activeTabName = computed(() => tabs.find(t => t.id === activeTab.value).name);
+                const currentWeather = computed(() => dates.find(d => d.date === selectedDate.value).weather);
+                const totalExpenses = computed(() => expenses.value.reduce((s, i) => s + (i.amount || 0), 0));
+
+                // 模擬交通時間計算
+                const getTransportData = (index) => {
+                    const item = itineraryItems.value[index];
+                    if (item.date !== selectedDate.value) return null;
+                    const icons = { walk: 'walking', car: 'car', bus: 'bus' };
+                    return { icon: icons[item.transport] || 'walking', time: Math.floor(Math.random() * 20) + 10 };
+                };
+
+                const openAddModal = () => {
+                    isEditing.value = false;
+                    newItem.value = { category: activeTab.value === 'itinerary' ? '景點' : '飲食', name: '', time: '', transport: 'walk', date: new Date().toISOString().split('T')[0], payment: '現金' };
+                    showModal.value = true;
+                };
+
+                const editItem = (item) => {
+                    isEditing.value = true;
+                    currentEditingId.value = item.id;
+                    newItem.value = { ...item };
+                    showModal.value = true;
+                };
+
+                const handleAddItem = () => {
+                    if (isEditing.value) {
+                        const idx = itineraryItems.value.findIndex(i => i.id === currentEditingId.value);
+                        itineraryItems.value[idx] = { ...newItem.value };
+                    } else {
+                        const data = { ...newItem.value, id: Date.now() };
+                        if (activeTab.value === 'itinerary') itineraryItems.value.push({ ...data, date: selectedDate.value });
+                        else if (activeTab.value === 'info') infoList.value.push(data);
+                        else if (activeTab.value === 'shopping') shoppingList.value.push(data);
+                        else if (activeTab.value === 'expenses') expenses.value.push(data);
+                    }
+                    showModal.value = false;
+                    nextTick(() => lucide.createIcons());
+                };
+
+                const handleDeleteItem = () => {
+                    if (confirm('確定要刪除這項紀錄嗎？此動作無法復原。')) {
+                        if (activeTab.value === 'itinerary') itineraryItems.value = itineraryItems.value.filter(i => i.id !== currentEditingId.value);
+                        showModal.value = false;
+                    }
+                };
+
+                const deleteItem = (type, item) => {
+                    if (confirm('確定刪除？')) {
+                        if (type === 'info') infoList.value = infoList.value.filter(i => i !== item);
+                        if (type === 'shopping') shoppingList.value = shoppingList.value.filter(i => i !== item);
+                    }
+                };
+
+                const handleFileUpload = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => { newItem.value.image = event.target.result; };
+                        reader.readAsDataURL(file);
+                    }
+                };
+
+                const openMap = (q) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, '_blank');
+
+                onMounted(() => lucide.createIcons());
+                watch([activeTab, selectedDate, showModal], () => nextTick(() => lucide.createIcons()));
+
+                return { 
+                    activeTab, tabs, dates, selectedDate, itineraryItems, infoList, shoppingList, expenses, 
+                    totalExpenses, currentWeather, showModal, newItem, isEditing, activeTabName,
+                    openAddModal, editItem, handleAddItem, handleDeleteItem, deleteItem, handleFileUpload, openMap, getTransportData
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
