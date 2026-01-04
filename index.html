@@ -22,7 +22,6 @@
 </head>
 <body>
     <div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative">
-        
         <header class="curved-header shadow-lg">
             <img src="IMG_0144.JPG" alt="Banner" class="banner-img" onerror="this.src='https://placehold.co/800x400?text=Fukuoka+Trip'">
             <div class="absolute bottom-16 right-4 flex space-x-2 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl shadow-xl">
@@ -36,8 +35,8 @@
             <div v-if="activeTab === 'itinerary'">
                 <div class="flex space-x-3 overflow-x-auto hide-scrollbar py-4">
                     <div v-for="day in dates" @click="selectedDate = day.date" 
-                         :class="selectedDate === day.date ? 'bg-blue-500 text-white shadow-lg' : 'bg-white/90 text-gray-500'" 
-                         class="flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer border border-white/40">
+                         :class="selectedDate === day.date ? 'bg-blue-500 text-white shadow-lg scale-105' : 'bg-white/90 text-gray-500'" 
+                         class="flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer border border-white/40 transition-all">
                         <span class="text-[10px] font-black uppercase">{{ day.weekday }}</span>
                         <span class="text-xl font-bold">{{ day.dayNum }}</span>
                     </div>
@@ -45,8 +44,7 @@
 
                 <div class="space-y-4">
                     <div v-for="(item, index) in sortedItinerary" :key="item.id">
-                        
-                        <div v-if="index > 0" class="flex flex-col items-center py-2 text-blue-400 opacity-60">
+                        <div v-if="index > 0" class="flex flex-col items-center py-1 text-blue-400 opacity-60">
                             <div class="flex items-center space-x-2 my-1">
                                 <i :data-lucide="getTransportIcon(item.transport)" class="w-3 h-3"></i>
                                 <span class="text-[10px] font-bold">預估交通 {{ calculateTravelTime(sortedItinerary[index-1], item) }} 分鐘</span>
@@ -56,22 +54,21 @@
                         <div v-if="item.category === '航班'" class="bg-gradient-to-br from-blue-600 to-blue-400 text-white p-5 rounded-[32px] shadow-lg relative" @click="openEditModal(item)">
                             <div class="flex justify-between items-center mb-3 text-[10px] font-bold">
                                 <span>{{ item.name }}</span>
-                                <span class="bg-white/20 px-2 py-0.5 rounded">{{ item.flightNo }}</span>
+                                <span class="bg-white/20 px-2 py-0.5 rounded">{{ item.flightNo || 'AK1510' }}</span>
                             </div>
                             <div class="flex justify-between items-center text-center">
-                                <div><h3 class="text-2xl font-black">TPE</h3><p class="text-xs">{{ item.time }}</p></div>
-                                <i data-lucide="plane" class="w-5 h-5 rotate-90 opacity-50"></i>
-                                <div><h3 class="text-2xl font-black">FUK</h3><p class="text-xs">{{ item.arrTime }}</p></div>
+                                <div><h3 class="text-2xl font-black">Departure</h3><p class="text-xs">{{ item.time }}</p></div>
+                                <i data-lucide="plane" class="w-6 h-6 rotate-90 opacity-80"></i>
+                                <div><h3 class="text-2xl font-black">Arrival</h3><p class="text-sm font-bold text-yellow-200">{{ item.arrTime || '--:--' }}</p></div>
                             </div>
                         </div>
 
-                        <div v-else class="glass-card p-5 relative shadow-sm border border-white active:scale-[0.98] transition-all" @click="openEditModal(item)">
+                        <div v-else class="glass-card p-5 relative shadow-sm border border-white" @click="openEditModal(item)">
                             <div class="flex justify-between items-start">
                                 <span class="text-[9px] bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-black uppercase">{{ item.category }}</span>
                                 <i data-lucide="edit-3" class="w-4 h-4 text-gray-300"></i>
                             </div>
                             <h3 class="font-bold text-gray-800 text-lg mt-1">{{ item.name }}</h3>
-                            
                             <div class="flex items-center justify-between mt-3">
                                 <div class="flex flex-col">
                                     <span class="text-[10px] text-gray-400">抵達時間</span>
@@ -90,22 +87,10 @@
                     </div>
                 </div>
             </div>
-
-            <div v-if="activeTab === 'info'" class="space-y-4 py-4">
-                <div v-for="info in infoList" :key="info.id" class="glass-card p-5 border border-white" @click="openEditModal(info)">
-                    <h4 class="font-bold text-gray-800 flex items-center"><i data-lucide="info" class="w-4 h-4 mr-2 text-blue-400"></i>{{ info.title }}</h4>
-                    <p class="text-sm text-gray-500 mt-2 whitespace-pre-line leading-relaxed">{{ info.content }}</p>
-                </div>
-            </div>
-
-            <div v-if="activeTab === 'expenses'" class="space-y-3 py-4">
-                <div class="bg-blue-600 rounded-[32px] p-6 text-white mb-6">
-                    <p class="text-xs opacity-70 mb-1 font-bold">Total Budget (JPY)</p>
-                    <h2 class="text-4xl font-bold">¥ {{ totalExpenses.toLocaleString() }}</h2>
-                </div>
-                <div v-for="ex in expenses" :key="ex.id" class="glass-card p-4 flex justify-between items-center" @click="openEditModal(ex)">
-                    <p class="font-bold text-gray-800">{{ ex.name }}</p>
-                    <p class="font-bold text-red-500">¥ {{ Number(ex.amount).toLocaleString() }}</p>
+            <div v-if="activeTab === 'info'" class="space-y-4 py-4 px-2">
+                <div v-for="info in infoList" :key="info.id" class="glass-card p-5" @click="openEditModal(info)">
+                    <h4 class="font-bold text-gray-800">{{ info.title }}</h4>
+                    <p class="text-sm text-gray-500 mt-2">{{ info.content }}</p>
                 </div>
             </div>
         </main>
@@ -117,51 +102,38 @@
         <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
             <div class="modal-content">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-gray-800">{{ isEditing ? '修改項目' : '新增' + activeTabName }}</h3>
-                    <button v-if="isEditing" @click="handleDelete" class="text-red-500 text-xs font-bold bg-red-50 px-3 py-1 rounded-full">刪除此項</button>
+                    <h3 class="text-xl font-bold">{{ isEditing ? '修改項目' : '新增項目' }}</h3>
+                    <button v-if="isEditing" @click="handleDelete" class="text-red-500 text-xs font-bold bg-red-50 px-3 py-1 rounded-full">刪除</button>
                 </div>
 
                 <div class="space-y-4">
-                    <template v-if="activeTab === 'itinerary'">
-                        <input v-model="form.name" placeholder="地點或名稱" class="w-full bg-gray-100 rounded-2xl p-4 outline-none font-bold">
-                        
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] text-gray-400 ml-2">抵達時間</label>
-                                <input v-model="form.time" type="time" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-gray-400 ml-2">停留時間 (分鐘)</label>
-                                <input v-model.number="form.stay" type="number" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
-                            </div>
+                    <input v-model="form.name" placeholder="名稱" class="w-full bg-gray-100 rounded-2xl p-4 outline-none font-bold">
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] text-gray-400 ml-2">抵達/起飛時間</label>
+                            <input v-model="form.time" type="time" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
                         </div>
+                        <div v-if="form.category === '航班'">
+                            <label class="text-[10px] text-gray-400 ml-2 font-bold text-blue-500">班機抵達時間</label>
+                            <input v-model="form.arrTime" type="time" class="w-full bg-blue-50 rounded-2xl p-4 outline-none border border-blue-100">
+                        </div>
+                        <div v-else>
+                            <label class="text-[10px] text-gray-400 ml-2">停留(分)</label>
+                            <input v-model.number="form.stay" type="number" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
+                        </div>
+                    </div>
 
-                        <select v-model="form.category" @change="autoSetStayTime" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
-                            <option value="景點">景點 (預設停留 90分)</option>
-                            <option value="美食">美食 (預設停留 60分)</option>
-                            <option value="購物">購物 (預設停留 120分)</option>
-                            <option value="住宿">住宿 (預設停留 30分)</option>
-                            <option value="航班">航班</option>
-                        </select>
+                    <div v-if="form.category === '航班'">
+                        <label class="text-[10px] text-gray-400 ml-2">航班編號</label>
+                        <input v-model="form.flightNo" placeholder="例: AK1510" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
+                    </div>
 
-                        <select v-model="form.transport" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
-                            <option value="bus">🚌 大眾運輸</option>
-                            <option value="walk">🚶 徒步</option>
-                            <option value="car">🚕 計程車/自駕</option>
-                        </select>
-                    </template>
-
-                    <template v-if="activeTab === 'info'">
-                        <input v-model="form.title" placeholder="標題" class="w-full bg-gray-100 rounded-2xl p-4 outline-none font-bold">
-                        <textarea v-model="form.content" placeholder="內容" class="w-full bg-gray-100 rounded-2xl p-4 outline-none h-32"></textarea>
-                    </template>
-                    <template v-if="activeTab === 'expenses'">
-                        <input v-model="form.name" placeholder="支出項目" class="w-full bg-gray-100 rounded-2xl p-4 outline-none font-bold">
-                        <input v-model.number="form.amount" type="number" placeholder="金額 (JPY)" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
-                    </template>
+                    <select v-model="form.category" @change="autoSetStayTime" class="w-full bg-gray-100 rounded-2xl p-4 outline-none">
+                        <option>景點</option><option>美食</option><option>航班</option><option>住宿</option>
+                    </option></select>
                 </div>
-                
-                <button @click="handleSave" class="w-full bg-blue-600 text-white rounded-2xl py-4 mt-8 font-black shadow-lg">確認儲存</button>
+                <button @click="handleSave" class="w-full bg-blue-600 text-white rounded-2xl py-4 mt-8 font-black">儲存</button>
             </div>
         </div>
     </div>
@@ -176,52 +148,32 @@
                 const isEditing = ref(false);
                 const form = ref({});
 
-                const tabs = [{id:'itinerary',icon:'map-pin',name:'行程'}, {id:'info',icon:'info',name:'資訊'}, {id:'expenses',icon:'banknote',name:'花費'}];
+                const tabs = [{id:'itinerary',icon:'map-pin',name:'行程'}, {id:'info',icon:'info',name:'資訊'}];
                 const dates = [{weekday:'Mon',dayNum:'6',date:'1/6'}, {weekday:'Tue',dayNum:'7',date:'1/7'}, {weekday:'Wed',dayNum:'8',date:'1/8'}, {weekday:'Thu',dayNum:'9',date:'1/9'}];
 
-                // 載入資料
                 const itineraryItems = ref(JSON.parse(localStorage.getItem('fuk_itinerary')) || []);
                 const infoList = ref(JSON.parse(localStorage.getItem('fuk_info')) || []);
-                const expenses = ref(JSON.parse(localStorage.getItem('fuk_expenses')) || []);
-
-                // 監聽變動
+                
                 watch(itineraryItems, (v) => localStorage.setItem('fuk_itinerary', JSON.stringify(v)), { deep: true });
-                watch(infoList, (v) => localStorage.setItem('fuk_info', JSON.stringify(v)), { deep: true });
-                watch(expenses, (v) => localStorage.setItem('fuk_expenses', JSON.stringify(v)), { deep: true });
 
-                const activeTabName = computed(() => tabs.find(t => t.id === activeTab.value).name);
                 const sortedItinerary = computed(() => itineraryItems.value.filter(i => i.date === selectedDate.value).sort((a,b) => a.time.localeCompare(b.time)));
-                const totalExpenses = computed(() => expenses.value.reduce((s, i) => s + (Number(i.amount) || 0), 0));
-
-                // --- 核心邏輯：時間處理 ---
-                const timeToMin = (t) => { if(!t) return 0; const [h,m] = t.split(':').map(Number); return h*60+m; };
-                const minToTime = (m) => {
-                    const h = Math.floor(m / 60) % 24;
-                    const min = m % 60;
-                    return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
-                };
 
                 const calculateEndTime = (item) => {
-                    if (item.category === '航班') return item.arrTime;
-                    const startMin = timeToMin(item.time);
-                    return minToTime(startMin + (item.stay || 0));
+                    if (item.category === '航班') return item.arrTime || item.time;
+                    const [h, m] = item.time.split(':').map(Number);
+                    const totalMin = h * 60 + m + (item.stay || 0);
+                    return `${String(Math.floor(totalMin/60)%24).padStart(2,'0')}:${String(totalMin%60).padStart(2,'0')}`;
                 };
 
                 const calculateTravelTime = (prev, curr) => {
-                    const prevEndMin = timeToMin(calculateEndTime(prev));
-                    const currStartMin = timeToMin(curr.time);
-                    const diff = currStartMin - prevEndMin;
+                    const toMin = (t) => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+                    const diff = toMin(curr.time) - toMin(calculateEndTime(prev));
                     return diff > 0 ? diff : 10;
-                };
-
-                const autoSetStayTime = () => {
-                    const preset = { '景點': 90, '美食': 60, '購物': 120, '住宿': 30 };
-                    if (preset[form.value.category]) form.value.stay = preset[form.value.category];
                 };
 
                 const handlePlusBtn = () => {
                     isEditing.value = false;
-                    form.value = { category:'景點', name:'', time:'12:00', stay:90, transport:'bus' };
+                    form.value = { category:'景點', name:'', time:'12:00', stay:90, transport:'bus', arrTime:'' };
                     showModal.value = true;
                 };
 
@@ -232,31 +184,25 @@
                 };
 
                 const handleSave = () => {
-                    const listMap = { itinerary: itineraryItems, info: infoList, expenses: expenses };
-                    const currentList = listMap[activeTab.value];
                     if(isEditing.value) {
-                        const idx = currentList.value.findIndex(i => i.id === form.value.id);
-                        if(idx !== -1) currentList.value[idx] = { ...form.value };
+                        const idx = itineraryItems.value.findIndex(i => i.id === form.value.id);
+                        itineraryItems.value[idx] = { ...form.value };
                     } else {
-                        const newItem = { ...form.value, id: Date.now() };
-                        if(activeTab.value === 'itinerary') newItem.date = selectedDate.value;
-                        currentList.value.push(newItem);
+                        itineraryItems.value.push({ ...form.value, id: Date.now(), date: selectedDate.value });
                     }
                     showModal.value = false;
                     nextTick(() => lucide.createIcons());
                 };
 
                 const handleDelete = () => {
-                    if(!confirm('確定刪除？')) return;
-                    const listMap = { itinerary: itineraryItems, info: infoList, expenses: expenses };
-                    listMap[activeTab.value].value = listMap[activeTab.value].value.filter(i => i.id !== form.value.id);
+                    itineraryItems.value = itineraryItems.value.filter(i => i.id !== form.value.id);
                     showModal.value = false;
                 };
 
                 onMounted(() => lucide.createIcons());
                 watch([activeTab, selectedDate, showModal], () => nextTick(() => lucide.createIcons()));
 
-                return { activeTab, tabs, dates, selectedDate, sortedItinerary, infoList, expenses, totalExpenses, showModal, form, isEditing, activeTabName, handlePlusBtn, openEditModal, handleSave, handleDelete, calculateEndTime, calculateTravelTime, autoSetStayTime, getTransportIcon: (t) => ({walk:'walking', car:'car', bus:'bus'}[t] || 'bus') };
+                return { activeTab, tabs, dates, selectedDate, sortedItinerary, showModal, form, isEditing, handlePlusBtn, openEditModal, handleSave, handleDelete, calculateEndTime, calculateTravelTime, getTransportIcon: (t) => ({walk:'walking', car:'car', bus:'bus'}[t] || 'bus'), autoSetStayTime: () => { if(form.value.category === '航班') form.value.stay = 0; } };
             }
         }).mount('#app');
     </script>
